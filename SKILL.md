@@ -6,7 +6,7 @@ metadata:
     "clawdbot":
       {
         "emoji": "🪙",
-        "homepage": "https://yuka.ichwan.me",
+        "homepage": "https://github.com/yuk4wonderlabs/yuka",
         "requires": { "bins": ["yuka"] },
       },
   }
