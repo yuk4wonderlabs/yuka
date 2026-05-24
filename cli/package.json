@@ -1,0 +1,33 @@
+{
+  "name": "hi-yuka",
+  "version": "0.1.0",
+  "description": "Agent token launchpad on Flaunch — give your agent a wallet, launch a token, earn from every trade",
+  "type": "module",
+  "bin": {
+    "yuka": "dist/index.js",
+    "hi-yuka": "dist/index.js"
+  },
+  "files": ["dist", "SKILL.md"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "prepack": "cp ../SKILL.md ./SKILL.md"
+  },
+  "keywords": ["token", "launch", "base", "erc-20", "cli", "ai-agent", "flaunch", "onchain"],
+  "license": "MIT",
+  "author": "ichwan.eth",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yuk4wonderlabs/yuka"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "ethers": "^6.13.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.9.0"
+  }
+}

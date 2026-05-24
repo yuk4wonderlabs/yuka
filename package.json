@@ -1,0 +1,12 @@
+{
+  "name": "yuka-launchpad-root",
+  "private": true,
+  "type": "module",
+  "workspaces": ["packages/*", "cli", "web"],
+  "scripts": {
+    "build": "npm run build --workspace=packages/shared && npm run build --workspace=cli",
+    "dev:cli": "npm run dev --workspace=cli",
+    "dev:web": "npm run dev --workspace=web",
+    "typecheck": "npm run typecheck --workspace=packages/shared && npm run typecheck --workspace=cli"
+  }
+}
