@@ -21,6 +21,7 @@ program
   .requiredOption("-s, --symbol <symbol>", "Token symbol (ticker)")
   .option("-d, --description <text>", "Token description")
   .option("-i, --image <path>", "Path to image file (PNG/JPG, max 5MB)")
+  .option("-w, --website <url>", "Website URL for the token")
   .option("--testnet", "Use Base Sepolia testnet", false)
   .option("--json", "Output as JSON", false)
   .action((opts) => launch(opts));
