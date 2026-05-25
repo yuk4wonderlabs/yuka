@@ -21,8 +21,8 @@ export async function launch(opts: LaunchParams): Promise<void> {
       try {
         await access(resolvedImage);
       } catch {
-        printError(`Image not found: ${resolvedImage}`, json, EXIT_CODES.UPLOAD_FAIL);
-        process.exit(EXIT_CODES.UPLOAD_FAIL);
+        printError("launch", `Image not found: ${resolvedImage}`, "INVALID_INPUT", json);
+        process.exit(EXIT_CODES.INVALID_INPUT);
       }
       imageSource = resolvedImage;
     } else {
@@ -58,7 +58,7 @@ export async function launch(opts: LaunchParams): Promise<void> {
     if (!json) console.log(` queued (job ${jobId})`);
 
     if (!json) process.stdout.write("Deploying on-chain");
-    const result = await pollLaunchStatus(jobId, (state, position) => {
+    const result = await pollLaunchStatus(jobId, (_state, position) => {
       if (!json) {
         if (position > 0) process.stdout.write(` [queue: ${position}]`);
         else process.stdout.write(".");
@@ -67,7 +67,7 @@ export async function launch(opts: LaunchParams): Promise<void> {
     if (!json) console.log(" done");
 
     if (!result.collectionToken?.address || !result.transactionHash) {
-      throw new YukaError("Launch completed but missing token address or tx hash", EXIT_CODES.LAUNCH_FAIL);
+      throw new YukaError("Launch completed but missing token address or tx hash", EXIT_CODES.GENERIC, "LAUNCH_FAIL");
     }
 
     const tokenAddress = result.collectionToken.address;
@@ -81,7 +81,7 @@ export async function launch(opts: LaunchParams): Promise<void> {
       flaunchUrl,
     });
 
-    printSuccess("Token launched!", {
+    printSuccess("launch", {
       tokenAddress,
       transactionHash: result.transactionHash,
       name,
@@ -91,11 +91,14 @@ export async function launch(opts: LaunchParams): Promise<void> {
       flaunch: flaunchUrl,
       wallet: wallet.address,
       ...(isNew ? { walletPath: "~/.yuka/wallet.json" } : {}),
-    }, json);
+    }, json, "Token launched!");
   } catch (error) {
-    if (error instanceof YukaError) { printError(error.message, json, error.exitCode); process.exit(error.exitCode); }
+    if (error instanceof YukaError) {
+      printError("launch", error.message, error.code, json);
+      process.exit(error.exitCode);
+    }
     const message = error instanceof Error ? error.message : String(error);
-    printError(message, json, EXIT_CODES.GENERAL);
-    process.exit(EXIT_CODES.GENERAL);
+    printError("launch", message, "GENERIC", json);
+    process.exit(EXIT_CODES.GENERIC);
   }
 }

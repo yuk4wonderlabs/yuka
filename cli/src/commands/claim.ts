@@ -27,7 +27,7 @@ export async function claim(opts: { testnet: boolean; json: boolean }): Promise<
 
     const claimable = await pm.balances(walletData.address) as bigint;
     if (claimable === 0n) {
-      printSuccess("No fees to claim", { claimable: "0 ETH", wallet: walletData.address }, json);
+      printSuccess("claim", { claimable: "0 ETH", wallet: walletData.address }, json, "No fees to claim");
       return;
     }
 
@@ -39,18 +39,21 @@ export async function claim(opts: { testnet: boolean; json: boolean }): Promise<
     if (!json) process.stdout.write("Waiting for confirmation...");
 
     const receipt = await tx.wait();
-    if (!receipt) throw new YukaError("Transaction dropped or replaced", EXIT_CODES.GENERAL);
+    if (!receipt) throw new YukaError("Transaction dropped or replaced", EXIT_CODES.GENERIC, "GENERIC");
     if (!json) console.log(" confirmed");
 
-    printSuccess("Fees claimed!", {
+    printSuccess("claim", {
       transactionHash: receipt.hash,
       claimed: `${ethers.formatEther(claimable)} ETH (minus protocol fee)`,
       wallet: walletData.address,
       network,
-    }, json);
+    }, json, "Fees claimed!");
   } catch (error) {
-    if (error instanceof YukaError) { printError(error.message, json, error.exitCode); process.exit(error.exitCode); }
-    printError(error instanceof Error ? error.message : String(error), json, EXIT_CODES.GENERAL);
-    process.exit(EXIT_CODES.GENERAL);
+    if (error instanceof YukaError) {
+      printError("claim", error.message, error.code, json);
+      process.exit(error.exitCode);
+    }
+    printError("claim", error instanceof Error ? error.message : String(error), "GENERIC", json);
+    process.exit(EXIT_CODES.GENERIC);
   }
 }

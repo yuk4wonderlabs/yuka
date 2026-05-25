@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 import { fetchTokenDetails, fetchTokenHolderCount } from "../lib/flaunch-api.js";
 import { CHAIN } from "../lib/config.js";
-import { printError } from "../lib/output.js";
+import { printSuccess, printError } from "../lib/output.js";
 import { EXIT_CODES, YukaError } from "../lib/errors.js";
 import type { Network } from "@yuka/shared";
 
@@ -24,7 +24,10 @@ export async function price(opts: { token: string; amount?: string; testnet: boo
   const chain = CHAIN[network];
 
   try {
-    if (!/^0x[a-fA-F0-9]{40}$/.test(token)) throw new Error("Invalid token address");
+    if (!/^0x[a-fA-F0-9]{40}$/.test(token)) {
+      printError("price", "Invalid token address — must be 0x followed by 40 hex characters", "INVALID_INPUT", json);
+      process.exit(EXIT_CODES.INVALID_INPUT);
+    }
 
     if (!json) console.log("\nFetching token details...\n");
 
@@ -37,55 +40,57 @@ export async function price(opts: { token: string; amount?: string; testnet: boo
     const volume24hETH = parseWei(details.volume.volume24h);
     const flaunchUrl = `${chain.flaunchUrl}/coin/${token}`;
 
-    if (json) {
-      const output: Record<string, unknown> = {
-        success: true,
-        tokenAddress: details.tokenAddress,
-        name: details.name,
-        symbol: details.symbol,
-        description: details.description,
-        image: details.image,
-        marketCapETH,
-        priceChange24h: details.price.priceChange24h,
-        volume24hETH,
-        holders,
-        creator: details.status.owner,
-        createdAt: new Date(details.status.createdAt * 1000).toISOString(),
-        flaunchUrl,
-        network: chain.name,
-      };
+    if (!json) {
+      const changeNum = parseFloat(details.price.priceChange24h);
+      const changeStr = isNaN(changeNum) ? details.price.priceChange24h : `${changeNum >= 0 ? "+" : ""}${changeNum.toFixed(2)}%`;
+      console.log(`  ${details.name} (${details.symbol})`);
+      console.log(`  ${details.tokenAddress}\n`);
+      if (details.description) console.log(`  ${details.description}\n`);
+      console.log(`  Market cap:  ${formatEthDisplay(parseFloat(marketCapETH))}`);
+      console.log(`  24h change:  ${changeStr}`);
+      console.log(`  24h volume:  ${formatEthDisplay(parseFloat(volume24hETH))}`);
+      console.log(`  Holders:     ${holders ?? "unknown"}`);
+      console.log(`  Trade:       ${flaunchUrl}\n`);
       if (opts.amount) {
-        const spendETH = parseFloat(opts.amount);
-        const mcapETH = parseFloat(marketCapETH);
-        output.estimate = {
-          spendETH: opts.amount,
-          percentOfMcap: mcapETH > 0 ? ((spendETH / mcapETH) * 100).toFixed(2) : null,
-          note: "Approximate — actual output depends on pool liquidity and slippage",
-        };
+        const pct = parseFloat(marketCapETH) > 0 ? ((parseFloat(opts.amount) / parseFloat(marketCapETH)) * 100).toFixed(2) : "N/A";
+        console.log(`  Estimate for ${opts.amount} ETH: ~${pct}% of market cap\n`);
       }
-      console.log(JSON.stringify(output, null, 2));
       return;
     }
 
-    const changeNum = parseFloat(details.price.priceChange24h);
-    const changeStr = isNaN(changeNum) ? details.price.priceChange24h : `${changeNum >= 0 ? "+" : ""}${changeNum.toFixed(2)}%`;
-
-    console.log(`  ${details.name} (${details.symbol})`);
-    console.log(`  ${details.tokenAddress}\n`);
-    if (details.description) console.log(`  ${details.description}\n`);
-    console.log(`  Market cap:  ${formatEthDisplay(parseFloat(marketCapETH))}`);
-    console.log(`  24h change:  ${changeStr}`);
-    console.log(`  24h volume:  ${formatEthDisplay(parseFloat(volume24hETH))}`);
-    console.log(`  Holders:     ${holders ?? "unknown"}`);
-    console.log(`  Trade:       ${flaunchUrl}\n`);
+    const data: Record<string, unknown> = {
+      tokenAddress: details.tokenAddress,
+      name: details.name,
+      symbol: details.symbol,
+      description: details.description,
+      image: details.image,
+      marketCapETH,
+      priceChange24h: details.price.priceChange24h,
+      volume24hETH,
+      holders,
+      creator: details.status.owner,
+      createdAt: new Date(details.status.createdAt * 1000).toISOString(),
+      flaunchUrl,
+      network: chain.name,
+    };
 
     if (opts.amount) {
-      const pct = parseFloat(marketCapETH) > 0 ? ((parseFloat(opts.amount) / parseFloat(marketCapETH)) * 100).toFixed(2) : "N/A";
-      console.log(`  Estimate for ${opts.amount} ETH: ~${pct}% of market cap\n`);
+      const spendETH = parseFloat(opts.amount);
+      const mcapETH = parseFloat(marketCapETH);
+      data.estimate = {
+        spendETH: opts.amount,
+        percentOfMcap: mcapETH > 0 ? ((spendETH / mcapETH) * 100).toFixed(2) : null,
+        note: "Approximate — actual output depends on pool liquidity and slippage",
+      };
     }
+
+    printSuccess("price", data, json);
   } catch (error) {
-    if (error instanceof YukaError) { printError(error.message, json, error.exitCode); process.exit(error.exitCode); }
-    printError(error instanceof Error ? error.message : String(error), json, EXIT_CODES.GENERAL);
-    process.exit(EXIT_CODES.GENERAL);
+    if (error instanceof YukaError) {
+      printError("price", error.message, error.code, json);
+      process.exit(error.exitCode);
+    }
+    printError("price", error instanceof Error ? error.message : String(error), "GENERIC", json);
+    process.exit(EXIT_CODES.GENERIC);
   }
 }

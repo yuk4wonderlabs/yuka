@@ -2,7 +2,7 @@ import { ethers } from "ethers";
 import { fetchTokensByOwner } from "../lib/flaunch-api.js";
 import { loadWallet, loadLaunchRecords } from "../lib/wallet.js";
 import { CHAIN } from "../lib/config.js";
-import { printError } from "../lib/output.js";
+import { printSuccess, printError } from "../lib/output.js";
 import { EXIT_CODES, YukaError, NoWalletError } from "../lib/errors.js";
 import type { Network } from "@yuka/shared";
 
@@ -41,72 +41,79 @@ export async function status(opts: { testnet: boolean; json: boolean }): Promise
 
     if (useLocal) {
       const records = (await loadLaunchRecords()).filter((r) => r.network === network);
+
       if (records.length === 0) {
-        if (json) console.log(JSON.stringify({ success: true, tokens: [], wallet: walletData.address, source: "local" }));
-        else console.log("\nNo tokens yet. Run `yuka launch` to create one.\n");
+        printSuccess("status", { tokens: [], wallet: walletData.address, source: "local", count: 0 }, json, "No tokens yet");
+        if (!json) process.stdout.write("  Run `yuka launch` to create one.\n\n");
         return;
       }
-      if (json) {
-        console.log(JSON.stringify({
-          success: true, count: records.length, network: chain.name,
-          wallet: walletData.address, source: "local",
-          tokens: records.map((r) => ({
-            name: r.name, symbol: r.symbol, tokenAddress: r.tokenAddress,
-            transactionHash: r.transactionHash, launchedAt: r.launchedAt,
-            flaunchUrl: r.flaunchUrl,
-          })),
-        }, null, 2));
+
+      if (!json) {
+        console.log(`\nYour tokens (${records.length}) — ${chain.name}\n`);
+        for (const r of records) {
+          console.log(`  ${r.name} (${r.symbol})`);
+          console.log(`    Token:   ${r.tokenAddress}`);
+          console.log(`    Trade:   ${r.flaunchUrl}`);
+          console.log(`    Date:    ${new Date(r.launchedAt).toLocaleDateString()}\n`);
+        }
         return;
       }
-      console.log(`\nYour tokens (${records.length}) — ${chain.name}\n`);
-      for (const r of records) {
-        console.log(`  ${r.name} (${r.symbol})`);
-        console.log(`    Token:   ${r.tokenAddress}`);
-        console.log(`    Trade:   ${r.flaunchUrl}`);
-        console.log(`    Date:    ${new Date(r.launchedAt).toLocaleDateString()}\n`);
-      }
+
+      printSuccess("status", {
+        count: records.length,
+        network: chain.name,
+        wallet: walletData.address,
+        source: "local",
+        tokens: records.map((r) => ({
+          name: r.name, symbol: r.symbol, tokenAddress: r.tokenAddress,
+          transactionHash: r.transactionHash, launchedAt: r.launchedAt,
+          flaunchUrl: r.flaunchUrl,
+        })),
+      }, json, `Your tokens (${records.length})`);
       return;
     }
 
     const tokens = [...apiTokens].sort((a, b) => b.createdAt - a.createdAt);
 
     if (tokens.length === 0) {
-      if (json) console.log(JSON.stringify({ success: true, tokens: [], wallet: walletData.address }));
-      else console.log("\nNo tokens yet. Run `yuka launch` to create one.\n");
+      printSuccess("status", { tokens: [], wallet: walletData.address, count: 0 }, json, "No tokens yet");
+      if (!json) process.stdout.write("  Run `yuka launch` to create one.\n\n");
       return;
     }
 
-    if (json) {
-      console.log(JSON.stringify({
-        success: true,
-        count: tokens.length,
-        network: chain.name,
-        wallet: walletData.address,
-        tokens: tokens.map((t) => ({
-          name: t.name,
-          symbol: t.symbol,
-          tokenAddress: t.tokenAddress,
-          marketCapETH: formatMarketCap(t.marketCapETH),
-          createdAt: new Date(t.createdAt * 1000).toISOString(),
-          fairLaunchActive: t.fairLaunchActive,
-          flaunchUrl: `${chain.flaunchUrl}/coin/${t.tokenAddress}`,
-        })),
-      }, null, 2));
+    if (!json) {
+      console.log(`\nYour tokens (${tokens.length}) — ${chain.name}\n`);
+      for (const token of tokens) {
+        const fairLaunch = token.fairLaunchActive ? " [FAIR LAUNCH]" : "";
+        console.log(`  ${token.name} (${token.symbol})${fairLaunch}`);
+        console.log(`    Token:   ${token.tokenAddress}`);
+        console.log(`    Mcap:    ${formatMarketCap(token.marketCapETH)}`);
+        console.log(`    Trade:   ${chain.flaunchUrl}/coin/${token.tokenAddress}`);
+        console.log(`    Date:    ${new Date(token.createdAt * 1000).toLocaleDateString()}\n`);
+      }
       return;
     }
 
-    console.log(`\nYour tokens (${tokens.length}) — ${chain.name}\n`);
-    for (const token of tokens) {
-      const fairLaunch = token.fairLaunchActive ? " [FAIR LAUNCH]" : "";
-      console.log(`  ${token.name} (${token.symbol})${fairLaunch}`);
-      console.log(`    Token:   ${token.tokenAddress}`);
-      console.log(`    Mcap:    ${formatMarketCap(token.marketCapETH)}`);
-      console.log(`    Trade:   ${chain.flaunchUrl}/coin/${token.tokenAddress}`);
-      console.log(`    Date:    ${new Date(token.createdAt * 1000).toLocaleDateString()}\n`);
-    }
+    printSuccess("status", {
+      count: tokens.length,
+      network: chain.name,
+      wallet: walletData.address,
+      tokens: tokens.map((t) => ({
+        name: t.name,
+        symbol: t.symbol,
+        tokenAddress: t.tokenAddress,
+        marketCapETH: formatMarketCap(t.marketCapETH),
+        createdAt: new Date(t.createdAt * 1000).toISOString(),
+        fairLaunchActive: t.fairLaunchActive,
+        flaunchUrl: `${chain.flaunchUrl}/coin/${t.tokenAddress}`,
+      })),
+    }, json, `Your tokens (${tokens.length})`);
   } catch (error) {
-    if (error instanceof YukaError) { printError(error.message, json, error.exitCode); process.exit(error.exitCode); }
-    printError(error instanceof Error ? error.message : String(error), json, EXIT_CODES.GENERAL);
-    process.exit(EXIT_CODES.GENERAL);
+    if (error instanceof YukaError) {
+      printError("status", error.message, error.code, json);
+      process.exit(error.exitCode);
+    }
+    printError("status", error instanceof Error ? error.message : String(error), "GENERIC", json);
+    process.exit(EXIT_CODES.GENERIC);
   }
 }

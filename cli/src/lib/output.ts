@@ -1,21 +1,22 @@
-export function printSuccess(message: string, data: Record<string, unknown>, json: boolean): void {
+export function printSuccess(command: string, data: Record<string, unknown>, json: boolean, label?: string): void {
   if (json) {
-    console.log(JSON.stringify({ success: true, ...data }, null, 2));
+    process.stdout.write(JSON.stringify({ ok: true, command, data }) + "\n");
   } else {
-    console.log(`\n${message}\n`);
+    console.log(`\n${label ?? command}\n`);
     for (const [key, value] of Object.entries(data)) {
       if (value === undefined || value === null) continue;
-      const label = key.replace(/([A-Z])/g, " $1").replace(/^./, (s) => s.toUpperCase());
-      console.log(`  ${label}: ${String(value)}`);
+      if (Array.isArray(value) || typeof value === "object") continue;
+      const k = key.replace(/([A-Z])/g, " $1").replace(/^./, s => s.toUpperCase());
+      console.log(`  ${k}: ${String(value)}`);
     }
     console.log();
   }
 }
 
-export function printError(message: string, json: boolean, exitCode: number): void {
+export function printError(command: string, message: string, code: string, json: boolean): void {
   if (json) {
-    console.error(JSON.stringify({ success: false, error: message, exitCode }));
+    process.stderr.write(JSON.stringify({ ok: false, command, error: { code, message } }) + "\n");
   } else {
-    console.error(`\nError: ${message}\n`);
+    process.stderr.write(`\nError: ${message}\n\n`);
   }
 }

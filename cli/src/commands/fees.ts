@@ -32,7 +32,7 @@ export async function fees(opts: { testnet: boolean; json: boolean }): Promise<v
     const walletBalance = await getWalletBalance(walletData.address, network);
     const hasGas = parseFloat(walletBalance) > 0;
 
-    printSuccess("Fee balance", {
+    printSuccess("fees", {
       claimable: `${claimableEth} ETH`,
       afterProtocolFee: `~${ethers.formatEther(afterProtocol)} ETH`,
       protocolFee: `${Number(protocolFeeBps) / 100}%`,
@@ -41,10 +41,13 @@ export async function fees(opts: { testnet: boolean; json: boolean }): Promise<v
       hasGas,
       network: chain.name,
       canClaim: hasGas && claimable > 0n,
-    }, json);
+    }, json, "Fee balance");
   } catch (error) {
-    if (error instanceof YukaError) { printError(error.message, json, error.exitCode); process.exit(error.exitCode); }
-    printError(error instanceof Error ? error.message : String(error), json, EXIT_CODES.GENERAL);
-    process.exit(EXIT_CODES.GENERAL);
+    if (error instanceof YukaError) {
+      printError("fees", error.message, error.code, json);
+      process.exit(error.exitCode);
+    }
+    printError("fees", error instanceof Error ? error.message : String(error), "GENERIC", json);
+    process.exit(EXIT_CODES.GENERIC);
   }
 }
