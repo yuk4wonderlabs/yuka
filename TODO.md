@@ -89,6 +89,12 @@
 
 ---
 
+## 🌟 Bucket List
+
+- [ ] **Base MCP skill** — submit YUKA as a skill to Base's MCP server (https://docs.base.org/ai-agents/quickstart). Base owns the chain, their skill directory = first-party distribution. Same format as Bankr skills submission. High value, low urgency.
+
+---
+
 ## 🔗 Deferred / Future
 
 ### YukaRegistry contract (~50 lines Solidity)
