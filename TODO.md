@@ -93,6 +93,14 @@
 
 - [ ] **Base MCP skill** — submit YUKA as a skill to Base's MCP server (https://docs.base.org/ai-agents/quickstart). Base owns the chain, their skill directory = first-party distribution. Same format as Bankr skills submission. High value, low urgency.
 
+## 🌟 agentskills.io — no submission needed, already works
+
+agentskills.io is the universal open standard (by Anthropic) used by Claude Code, GitHub Copilot, Cursor, Gemini CLI, OpenAI Codex, VS Code, and 30+ agents. They don't have a central directory — agents load skills directly from GitHub URLs.
+
+Our SKILL.md already follows the format. Any agent user can install YUKA right now by pointing to: github.com/yuk4wonderlabs/yuka
+
+- [ ] **Document skill installation** on yuka.lol/skills — add "Install in Claude Code / Cursor / Copilot" instructions with the GitHub URL. Low effort, high visibility.
+
 ---
 
 ## 🔗 Deferred / Future
