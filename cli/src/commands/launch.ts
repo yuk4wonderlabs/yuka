@@ -8,16 +8,18 @@ import { CHAIN } from "../lib/config.js";
 import { YukaError, EXIT_CODES } from "../lib/errors.js";
 import type { LaunchParams, Network } from "@yuka/shared";
 
+const YUKA_REGISTRY = "https://yuka.lol/api/registry/save";
+
 export async function launch(opts: LaunchParams): Promise<void> {
-  const { name, symbol, description, website, testnet, json } = opts;
+  const { name, symbol, description, website, twitter, telegram, testnet, json } = opts;
   const network: Network = testnet ? "testnet" : "mainnet";
   const chain = testnet ? CHAIN.testnet : CHAIN.mainnet;
 
   try {
     let imageSource: string | { buffer: Buffer; mime: string };
 
-    if (opts.imagePath) {
-      const resolvedImage = resolve(opts.imagePath);
+    if (opts.image) {
+      const resolvedImage = resolve(opts.image);
       try {
         await access(resolvedImage);
       } catch {
@@ -73,13 +75,32 @@ export async function launch(opts: LaunchParams): Promise<void> {
     const tokenAddress = result.collectionToken.address;
     const flaunchUrl = `${chain.flaunchUrl}/coin/${tokenAddress}`;
 
+    const launchedAt = new Date().toISOString();
+
     await saveLaunchRecord({
       name, symbol, tokenAddress,
       transactionHash: result.transactionHash,
       network, walletAddress: wallet.address,
-      launchedAt: new Date().toISOString(),
-      flaunchUrl,
+      launchedAt, flaunchUrl,
     });
+
+    // Save to YUKA registry (best-effort, don't block output)
+    fetch(YUKA_REGISTRY, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        address: tokenAddress,
+        wallet: wallet.address,
+        name, symbol,
+        description: description ?? "",
+        website: website ?? "",
+        twitter: twitter ?? "",
+        telegram: telegram ?? "",
+        imageIpfs: "",
+        network: testnet ? "base-sepolia" : "base",
+        launchedAt,
+      }),
+    }).catch(() => {}); // never fail the CLI if registry is down
 
     printSuccess("launch", {
       tokenAddress,

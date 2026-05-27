@@ -21,8 +21,10 @@ export interface LaunchParams {
   name: string;
   symbol: string;
   description: string;
-  imagePath?: string;
+  image?: string;
   website?: string;
+  twitter?: string;
+  telegram?: string;
   testnet: boolean;
   json: boolean;
 }
