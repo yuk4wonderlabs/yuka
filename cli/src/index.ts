@@ -6,6 +6,7 @@ import { fees } from "./commands/fees.js";
 import { claim } from "./commands/claim.js";
 import { status } from "./commands/status.js";
 import { price } from "./commands/price.js";
+import { swap } from "./commands/swap.js";
 
 const program = new Command();
 
@@ -69,5 +70,17 @@ program
   .option("--testnet", "Use Base Sepolia testnet", false)
   .option("--json", "Output as JSON", false)
   .action((token, opts) => price({ token, ...opts }));
+
+program
+  .command("swap")
+  .description("Swap ETH → USDC via Uniswap on Base")
+  .option("--from <token>", "Token to sell (default: ETH)", "ETH")
+  .option("--to <token>", "Token to buy (default: USDC)", "USDC")
+  .option("--amount <eth>", "Amount of ETH to swap")
+  .option("--all", "Swap entire wallet balance (keeps 0.0005 ETH for gas)", false)
+  .option("--quote", "Show quote only — do not execute swap", false)
+  .option("--slippage <pct>", "Max slippage percent (default: 0.5)", "0.5")
+  .option("--json", "Output as JSON", false)
+  .action((opts) => swap(opts));
 
 program.parse();

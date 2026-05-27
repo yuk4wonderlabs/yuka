@@ -1,6 +1,6 @@
 ---
 name: yuka-launchpad
-description: Launch ERC-20 tokens on Base via Flaunch and earn trading fees automatically. Use when the agent wants to create a token, check claimable fees, or claim ETH earnings to its wallet. Includes wallet creation, token launch, fee monitoring, and fee claiming.
+description: Launch ERC-20 tokens on Base via Flaunch, earn trading fees automatically, and swap ETH → USDC via Uniswap. Use when the agent wants to create a token, check claimable fees, claim ETH earnings, or convert ETH to USDC. Closes the full earn loop — launch, earn, claim, swap.
 metadata:
   {
     "clawdbot":
@@ -14,7 +14,7 @@ metadata:
 
 # YUKA — Agent Launchpad Skill
 
-YUKA is a CLI for AI agents to launch ERC-20 tokens on Flaunch (Base) and earn trading fees automatically.
+YUKA is a CLI for AI agents to launch ERC-20 tokens on Flaunch (Base), earn trading fees automatically, and swap ETH → USDC via Uniswap.
 
 ## Install
 
@@ -120,6 +120,29 @@ yuka claim [--testnet] [--json]
 
 ---
 
+### swap
+Swap ETH → USDC via Uniswap V3 on Base. Completes the earn loop: claim fees as ETH, convert to USDC.
+
+```
+yuka swap [--amount <eth>] [--all] [--quote] [--slippage <pct>] [--json]
+```
+
+**Parameters**:
+- `--amount <eth>`: ETH amount to swap, e.g. `0.01`
+- `--all`: Swap entire wallet balance (keeps 0.0005 ETH reserved for gas)
+- `--quote`: Preview the rate without executing — safe to call any time
+- `--slippage <pct>`: Max slippage in percent (default: 0.5)
+- `--json`: Machine-readable output
+
+**Output**: sold (ETH), received (USDC), rate (ETH price), transactionHash, explorer link
+
+**Notes**:
+- Mainnet only — Base Sepolia has no ETH/USDC liquidity
+- Uses the 0.05% ETH/USDC Uniswap pool (deepest on Base)
+- Always run `--quote` first to see the rate before committing
+
+---
+
 ## Typical Agent Workflow
 
 1. `yuka wallet` — get address
@@ -128,6 +151,8 @@ yuka claim [--testnet] [--json]
 4. `yuka status` — verify token is live
 5. `yuka fees` — check earned fees periodically
 6. `yuka claim` — claim fees when balance is meaningful
+7. `yuka swap --quote --all` — preview ETH → USDC rate
+8. `yuka swap --all` — convert earned ETH to USDC
 
 ## JSON Mode
 

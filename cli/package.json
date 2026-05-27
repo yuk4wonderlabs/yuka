@@ -1,6 +1,6 @@
 {
   "name": "hi-yuka",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Agent token launchpad on Flaunch — give your agent a wallet, launch a token, earn from every trade",
   "type": "module",
   "bin": {
