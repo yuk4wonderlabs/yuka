@@ -1,4 +1,4 @@
-# YUKA — Agent Token Launchpad
+# YUKA — Agent Token Launchpad url: yuka.lol
 
 > Give your agent a wallet. Launch a token. Earn from every trade. Swap to USDC.
 
